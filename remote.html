@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Scoreboard Badminton</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            background: linear-gradient(135deg, #000428 0%, #004e92 100%); 
+            color: #fff; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 85px 20px 30px 20px;
+        }
+
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 4, 40, 0.85);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .main-nav a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 8px 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .main-nav a:hover, .main-nav a.active {
+            background: #00f2fe;
+            color: #000428;
+            border-color: #00f2fe;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+        }
+
+        h2 { margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px; color: #00f2fe; }
+
+        .container { width: 100%; max-width: 450px; }
+
+        .match-select-box {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 15px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 242, 254, 0.4);
+        }
+
+        .match-select-box label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #00f2fe;
+            margin-bottom: 6px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            background: rgba(0, 4, 40, 0.9);
+            color: #ffffff;
+            border: 2px solid #00f2fe;
+            outline: none;
+        }
+
+        .team-box { 
+            background: rgba(255, 255, 255, 0.12); 
+            padding: 22px; 
+            margin-bottom: 20px; 
+            border-radius: 18px; 
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        input { 
+            font-size: 1.4rem; 
+            font-weight: bold;
+            text-align: center; 
+            width: 100%; 
+            padding: 10px; 
+            margin-bottom: 12px; 
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .score-display { font-size: 4.5rem; font-weight: bold; margin: 10px 0; color: #ffb703; }
+        
+        .btn-group { display: flex; justify-content: center; gap: 15px; }
+
+        button.btn-score { 
+            font-size: 2.2rem; 
+            width: 70px; 
+            height: 70px; 
+            cursor: pointer; 
+            border-radius: 50%; 
+            border: none; 
+            background: #00f2fe; 
+            color: #000428; 
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+            transition: transform 0.1s ease;
+        }
+
+        button.btn-score:active { transform: scale(0.92); }
+
+        .btn-reset { 
+            font-size: 1.1rem; 
+            width: 100%; 
+            padding: 15px; 
+            margin-top: 10px; 
+            cursor: pointer; 
+            border-radius: 14px; 
+            border: none; 
+            background: #ff007f; 
+            color: white; 
+            font-weight: 800;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.4);
+        }
+
+        .btn-reset:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+    <nav class="main-nav">
+        <a href="index.html">🏆 Bagan Pertandingan</a>
+        <a href="scoreboard.html">📺 Display Scoreboard</a>
+        <a href="remote.html" class="active">📱 Remote Control</a>
+    </nav>
+
+    <h2>📱 Remote Controller</h2>
+    
+    <div class="container">
+        <div class="match-select-box">
+            <label for="matchSelector">PILIH PERTANDINGAN DIMAINKAN:</label>
+            <select id="matchSelector" onchange="switchMatch(this.value)">
+                <option value="m1">Match 1 - 16 Besar (A)</option>
+                <option value="m2">Match 2 - 16 Besar (A)</option>
+                <option value="m3">Match 3 - 16 Besar (A)</option>
+                <option value="m4">Match 4 - 16 Besar (A)</option>
+                <option value="m5">Match 5 - 8 Besar (Kiri)</option>
+                <option value="m6">Match 6 - 8 Besar (Kiri)</option>
+                <option value="m7">Match 7 - Semifinal (Kiri)</option>
+                <option value="m8">Match 8 - FINAL</option>
+                <option value="m9">Match 9 - Semifinal (Kanan)</option>
+                <option value="m10">Match 10 - 8 Besar (Kanan)</option>
+                <option value="m11">Match 11 - 8 Besar (Kanan)</option>
+                <option value="m12">Match 12 - 16 Besar (B)</option>
+                <option value="m13">Match 13 - 16 Besar (B)</option>
+                <option value="m14">Match 14 - 16 Besar (B)</option>
+                <option value="m15">Match 15 - 16 Besar (B)</option>
+            </select>
+        </div>
+
+        <div class="team-box">
+            <input type="text" id="nameA" oninput="changeName('A')" value="TIM A">
+            <div class="score-display" id="scoreA">0</div>
+            <div class="btn-group">
+                <button class="btn-score" onclick="changeScore('A', -1)">-</button>
+                <button class="btn-score" onclick="changeScore('A', 1)">+</button>
+            </div>
+        </div>
+
+        <div class="team-box">
+            <input type="text" id="nameB" oninput="changeName('B')" value="TIM B">
+            <div class="score-display" id="scoreB">0</div>
+            <div class="btn-group">
+                <button class="btn-score" onclick="changeScore('B', -1)">-</button>
+                <button class="btn-score" onclick="changeScore('B', 1)">+</button>
+            </div>
+        </div>
+
+        <button class="btn-reset" onclick="resetScore()">🗑️ Reset Skor Match Ini</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJoXlc5EP9LmbINBvlJfsVJPDdlEgJY1o",
+            authDomain: "bagan-badminton.firebaseapp.com",
+            databaseURL: "https://bagan-badminton-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "bagan-badminton",
+            storageBucket: "bagan-badminton.firebasestorage.app",
+            messagingSenderId: "776101992812",
+            appId: "1:776101992812:web:554e0e50d1528cc530fb49",
+            measurementId: "G-G0T4KYS4W2"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        let currentMatchId = "m1";
+        let activeMatchListener = null;
+
+        // Cek parameter URL atau active_match_id dari Firebase
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('match')) {
+            currentMatchId = urlParams.get('match');
+            db.ref('active_match_id').set(currentMatchId);
+        }
+
+        db.ref('active_match_id').on('value', (snapshot) => {
+            const activeId = snapshot.val();
+            if (activeId) {
+                currentMatchId = activeId;
+                document.getElementById('matchSelector').value = currentMatchId;
+                bindMatch(currentMatchId);
+            }
+        });
+
+        function switchMatch(matchId) {
+            currentMatchId = matchId;
+            db.ref('active_match_id').set(matchId);
+            bindMatch(matchId);
+        }
+
+        function bindMatch(matchId) {
+            if (activeMatchListener) activeMatchListener.off();
+
+            activeMatchListener = db.ref(`matches/${matchId}`);
+            activeMatchListener.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    if (document.activeElement !== document.getElementById('nameA')) {
+                        document.getElementById('nameA').value = data.teamA || 'TIM A';
+                    }
+                    if (document.activeElement !== document.getElementById('nameB')) {
+                        document.getElementById('nameB').value = data.teamB || 'TIM B';
+                    }
+                    document.getElementById('scoreA').innerText = data.scoreA !== undefined ? data.scoreA : 0;
+                    document.getElementById('scoreB').innerText = data.scoreB !== undefined ? data.scoreB : 0;
+                }
+            });
+        }
+
+        function changeScore(team, val) {
+            const scoreElem = document.getElementById('score' + team);
+            let currentScore = parseInt(scoreElem.innerText) || 0;
+            let newScore = Math.max(0, currentScore + val);
+            db.ref(`matches/${currentMatchId}/score${team}`).set(newScore);
+        }
+
+        function changeName(team) {
+            const nameVal = document.getElementById('name' + team).value;
+            db.ref(`matches/${currentMatchId}/team${team}`).set(nameVal);
+        }
+
+        function resetScore() {
+            if (confirm(`Reset skor untuk ${currentMatchId.toUpperCase()}?`)) {
+                db.ref(`matches/${currentMatchId}/scoreA`).set(0);
+                db.ref(`matches/${currentMatchId}/scoreB`).set(0);
+            }
+        }
+    </script>
+</body>
+</html>
