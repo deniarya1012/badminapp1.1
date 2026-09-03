@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bagan Pertandingan Badminton - Display TV & Mobile</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+            color: #ffffff;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .hamburger-btn { display: none; }
+
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 4, 40, 0.85);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .main-nav a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .main-nav a:hover, .main-nav a.active {
+            background: #00f2fe;
+            color: #000428;
+            border-color: #00f2fe;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+        }
+
+        .controls-container {
+            position: absolute;
+            top: 75px;
+            right: 25px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .btn-control {
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff;
+            padding: 12px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 14px;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            font-size: 1rem;
+            font-weight: 800;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        .btn-control:hover {
+            background: rgba(255, 255, 255, 0.35);
+            border-color: #00f2fe;
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.7);
+            transform: scale(1.05);
+        }
+
+        .btn-reset { display: none; }
+        .btn-reset:hover {
+            border-color: #ff007f;
+            box-shadow: 0 0 25px rgba(255, 0, 127, 0.7);
+        }
+
+        :fullscreen .controls-container, :-webkit-full-screen .controls-container,
+        :fullscreen .main-nav, :-webkit-full-screen .main-nav,
+        :fullscreen .hamburger-btn, :-webkit-full-screen .hamburger-btn {
+            display: none !important;
+        }
+
+        :fullscreen, :fullscreen * { cursor: none !important; }
+        :-webkit-full-screen, :-webkit-full-screen * { cursor: none !important; }
+
+        .main-content-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 2400px;
+            padding: 100px 20px 25px 20px;
+        }
+        
+        :fullscreen .main-content-wrapper, :-webkit-full-screen .main-content-wrapper {
+            padding: 15px;
+        }
+
+        .header { text-align: center; margin-bottom: 20px; text-transform: uppercase; }
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, #00f2fe 0%, #4facfe 50%, #ffb703 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(0, 242, 254, 0.5);
+        }
+
+        .bracket-container {
+            display: grid;
+            grid-template-columns: 1fr 0.95fr 0.9fr 1.1fr 0.9fr 0.95fr 1fr; 
+            gap: 24px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .round, .center-column {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 960px;
+            position: relative;
+        }
+
+        .round-title {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #00f2fe;
+            margin-bottom: 12px;
+            text-shadow: 0 0 12px rgba(0, 242, 254, 0.5);
+            height: 30px;
+            flex-shrink: 0;
+        }
+
+        .round-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            position: relative;
+            width: 100%;
+        }
+
+        .center-body { justify-content: center; }
+
+        .match-pair {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .round-8-pair { height: 100%; justify-content: space-around; }
+
+        .pair-left { position: relative; }
+        .pair-left::after {
+            content: '';
+            position: absolute;
+            right: -12px;
+            top: 50px;
+            bottom: 50px;
+            width: 12px;
+            border-right: 2px solid #00f2fe;
+            border-top: 2px solid #00f2fe;
+            border-bottom: 2px solid #00f2fe;
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+            pointer-events: none;
+            box-shadow: 2px 0 8px rgba(0, 242, 254, 0.4);
+        }
+
+        .pair-left::before {
+            content: '';
+            position: absolute;
+            right: -24px;
+            top: 50%;
+            width: 12px;
+            height: 2px;
+            background: #00f2fe;
+            pointer-events: none;
+            box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+        }
+
+        .round-8-pair.pair-left::after { top: 25% !important; bottom: 25% !important; }
+
+        .match-left-single { position: relative; }
+        .match-left-single::after {
+            content: '';
+            position: absolute;
+            right: -24px;
+            top: 50%;
+            width: 24px;
+            height: 2px;
+            background: #00f2fe;
+            pointer-events: none;
+            box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+        }
+
+        .pair-right { position: relative; }
+        .pair-right::after {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 50px;
+            bottom: 50px;
+            width: 12px;
+            border-left: 2px solid #ff007f;
+            border-top: 2px solid #ff007f;
+            border-bottom: 2px solid #ff007f;
+            border-top-left-radius: 6px;
+            border-bottom-left-radius: 6px;
+            pointer-events: none;
+            box-shadow: -2px 0 8px rgba(255, 0, 127, 0.4);
+        }
+
+        .pair-right::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 50%;
+            width: 12px;
+            height: 2px;
+            background: #ff007f;
+            pointer-events: none;
+            box-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
+        }
+
+        .round-8-pair.pair-right::after { top: 25% !important; bottom: 25% !important; }
+
+        .match-right-single { position: relative; }
+        .match-right-single::after {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 50%;
+            width: 24px;
+            height: 2px;
+            background: #ff007f;
+            pointer-events: none;
+            box-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
+        }
+
+        .match-box {
+            background: rgba(255, 255, 255, 0.14);
+            border: 2px solid rgba(255, 255, 255, 0.28);
+            border-radius: 14px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.45);
+            padding: 8px;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            padding: 0 4px;
+        }
+
+        .match-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #00f2fe;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-live-match {
+            background: rgba(0, 242, 254, 0.2);
+            border: 1px solid #00f2fe;
+            color: #00f2fe;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-live-match:hover, .btn-live-match.active-live {
+            background: #00f2fe;
+            color: #000428;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
+        }
+
+        .team-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.42);
+            border-radius: 10px;
+            padding: 6px 10px;
+            margin: 4px 0;
+            border-left: 6px solid #00f2fe;
+            transition: all 0.3s ease;
+        }
+
+        .team-row.away { border-left-color: #ff007f; }
+
+        /* TAMPILAN TIM KALAH (ABU-ABU & AGAK BURAM) */
+        .team-row.lost {
+            background: rgba(40, 40, 40, 0.5) !important;
+            border-left-color: #666666 !important;
+            opacity: 0.45;
+            filter: grayscale(80%) blur(0.6px);
+        }
+
+        .team-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .team-input {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 1.05rem;
+            font-weight: 800;
+            width: 100%;
+            outline: none;
+            font-family: inherit;
+            text-transform: uppercase;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .player-input {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.8rem;
+            font-weight: 600;
+            width: 100%;
+            outline: none;
+            font-family: inherit;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .score-input {
+            background: rgba(255, 255, 255, 0.22);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-weight: 900;
+            text-align: center;
+            width: 46px;
+            height: 46px;
+            outline: none;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        input[readonly] { cursor: default; user-select: none; }
+
+        .final-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .final-title {
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #ffb703;
+            margin-bottom: 8px;
+            text-shadow: 0 0 12px rgba(255, 183, 3, 0.6);
+        }
+
+        .final-box { width: 100%; border: 3px solid rgba(255, 215, 0, 0.85); box-shadow: 0 0 35px rgba(255, 215, 0, 0.4); }
+
+        .champion-box {
+            position: absolute;
+            top: 15px;
+            width: 100%;
+            background: linear-gradient(135deg, rgba(255, 183, 3, 0.3) 0%, rgba(255, 215, 0, 0.12) 100%);
+            border: 3px solid #ffb703;
+            border-radius: 20px;
+            backdrop-filter: blur(16px);
+            padding: 14px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255, 183, 3, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            z-index: 5;
+        }
+
+        .trophy-icon { font-size: 3.2rem; line-height: 1; margin-bottom: 2px; }
+        .champion-title { font-size: 1.15rem; letter-spacing: 2px; color: #ffb703; font-weight: 900; text-transform: uppercase; }
+        .champion-input { text-align: center; font-size: 1.4rem; font-weight: 900; color: #ffffff; margin-top: 2px; }
+        .champion-player-input { text-align: center; font-size: 0.9rem; color: rgba(255, 255, 255, 0.85); }
+
+        @media (max-width: 1200px) {
+            .pair-left::after, .pair-left::before,
+            .pair-right::after, .pair-right::before,
+            .match-left-single::after, .match-right-single::after { display: none !important; }
+
+            .hamburger-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: fixed;
+                top: 15px;
+                right: 15px;
+                width: 48px;
+                height: 48px;
+                background: rgba(0, 4, 40, 0.9);
+                color: #00f2fe;
+                border: 2px solid #00f2fe;
+                border-radius: 14px;
+                font-size: 1.6rem;
+                cursor: pointer;
+                z-index: 1001;
+                backdrop-filter: blur(10px);
+            }
+
+            .main-nav {
+                display: none;
+                flex-direction: column;
+                position: fixed;
+                top: 72px;
+                right: 15px;
+                width: 240px;
+                background: rgba(0, 4, 40, 0.95);
+                border: 1px solid rgba(0, 242, 254, 0.4);
+                border-radius: 16px;
+                padding: 15px;
+                gap: 10px;
+            }
+
+            .main-nav.active-menu { display: flex; }
+            .bracket-container { display: flex; flex-direction: column; gap: 28px; }
+            .round, .center-column { min-height: auto; gap: 14px; }
+            .champion-box { position: relative; top: auto; margin-bottom: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMenu()">☰</button>
+
+    <nav class="main-nav" id="mainNav">
+        <a href="index.html" class="active">🏆 Bagan Pertandingan</a>
+        <a href="scoreboard.html">📺 Display Scoreboard</a>
+        <a href="remote.html">📱 Remote Control</a>
+    </nav>
+
+    <div class="controls-container">
+        <button class="btn-control" id="btn-admin" onclick="toggleAdminMode()">🔒 Login Panitia</button>
+        <button class="btn-control btn-reset" id="btn-reset" onclick="resetData()">🗑️ Reset Data</button>
+        <button class="btn-control" onclick="toggleFullScreen()">📺 Full Screen</button>
+    </div>
+
+    <div class="main-content-wrapper">
+        <div class="header">
+            <h1>Turnamen Badminton Hari Radio ke 81</h1>
+        </div>
+
+        <div class="bracket-container">
+            <div class="round round-16-left">
+                <div class="round-title">16 Besar (A)</div>
+                <div class="round-body">
+                    <div class="match-pair pair-left">
+                        <div class="match-box" data-match-id="m1">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 1</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m1')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="TIM A1">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="TIM A2">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                        <div class="match-box" data-match-id="m2">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 2</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m2')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="TIM B1">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="TIM B2">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="match-pair pair-left">
+                        <div class="match-box" data-match-id="m3">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 3</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m3')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="TIM C1">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="TIM C2">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                        <div class="match-box" data-match-id="m4">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 4</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m4')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="TIM D1">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="TIM D2">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="round round-8-left">
+                <div class="round-title">8 Besar (Kiri)</div>
+                <div class="round-body">
+                    <div class="match-pair pair-left round-8-pair">
+                        <div class="match-box" data-match-id="m9">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 9</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m9')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="PEMENANG MATCH 1">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="PEMENANG MATCH 2">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                        <div class="match-box" data-match-id="m10">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 10</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m10')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="PEMENANG MATCH 3">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="PEMENANG MATCH 4">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="round round-semi-left">
+                <div class="round-title">Semifinal (Kiri)</div>
+                <div class="round-body">
+                    <div class="match-box match-left-single" data-match-id="m13">
+                        <div class="match-header">
+                            <span class="match-label">MATCH 13</span>
+                            <button class="btn-live-match" onclick="goToScoreboard('m13')">📺 Scoreboard</button>
+                        </div>
+                        <div class="team-row">
+                            <div class="team-details">
+                                <input type="text" class="team-input" data-key="teamA" value="SEMIFINALIS 1">
+                                <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                            </div>
+                            <input type="number" class="score-input" data-key="scoreA" value="0">
+                        </div>
+                        <div class="team-row away">
+                            <div class="team-details">
+                                <input type="text" class="team-input" data-key="teamB" value="SEMIFINALIS 2">
+                                <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                            </div>
+                            <input type="number" class="score-input" data-key="scoreB" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="center-column">
+                <div class="round-title">Babak Final</div>
+                <div class="round-body center-body">
+                    <div class="champion-box">
+                        <div class="trophy-icon">🏆</div>
+                        <div class="champion-title">Juara Utama</div>
+                        <input type="text" class="team-input champion-input" data-key="championTeam" value="NAMA JUARA">
+                        <input type="text" class="player-input champion-player-input" data-key="championPlayer1" value="Pemain 1">
+                        <input type="text" class="player-input champion-player-input" data-key="championPlayer2" value="Pemain 2">
+                    </div>
+                    <div class="final-wrapper">
+                        <div class="final-title">FINAL</div>
+                        <div class="match-box final-box" data-match-id="m15">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 15 (FINAL)</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m15')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="FINALIS KIRI">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="FINALIS KANAN">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="round round-semi-right">
+                <div class="round-title">Semifinal (Kanan)</div>
+                <div class="round-body">
+                    <div class="match-box match-right-single" data-match-id="m14">
+                        <div class="match-header">
+                            <span class="match-label">MATCH 14</span>
+                            <button class="btn-live-match" onclick="goToScoreboard('m14')">📺 Scoreboard</button>
+                        </div>
+                        <div class="team-row">
+                            <div class="team-details">
+                                <input type="text" class="team-input" data-key="teamA" value="SEMIFINALIS 3">
+                                <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                            </div>
+                            <input type="number" class="score-input" data-key="scoreA" value="0">
+                        </div>
+                        <div class="team-row away">
+                            <div class="team-details">
+                                <input type="text" class="team-input" data-key="teamB" value="SEMIFINALIS 4">
+                                <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                            </div>
+                            <input type="number" class="score-input" data-key="scoreB" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="round round-8-right">
+                <div class="round-title">8 Besar (Kanan)</div>
+                <div class="round-body">
+                    <div class="match-pair pair-right round-8-pair">
+                        <div class="match-box" data-match-id="m11">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 11</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m11')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="PEMENANG MATCH 5">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="PEMENANG MATCH 6">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                        <div class="match-box" data-match-id="m12">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 12</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m12')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="PEMENANG MATCH 7">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="PEMENANG MATCH 8">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="round round-16-right">
+                <div class="round-title">16 Besar (B)</div>
+                <div class="round-body">
+                    <div class="match-pair pair-right">
+                        <div class="match-box" data-match-id="m5">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 5</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m5')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="TIM E1">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="TIM E2">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                        <div class="match-box" data-match-id="m6">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 6</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m6')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="TIM F1">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="TIM F2">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="match-pair pair-right">
+                        <div class="match-box" data-match-id="m7">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 7</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m7')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="TIM G1">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="TIM G2">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                        <div class="match-box" data-match-id="m8">
+                            <div class="match-header">
+                                <span class="match-label">MATCH 8</span>
+                                <button class="btn-live-match" onclick="goToScoreboard('m8')">📺 Scoreboard</button>
+                            </div>
+                            <div class="team-row">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamA" value="TIM H1">
+                                    <input type="text" class="player-input" data-key="playerA1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerA2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreA" value="0">
+                            </div>
+                            <div class="team-row away">
+                                <div class="team-details">
+                                    <input type="text" class="team-input" data-key="teamB" value="TIM H2">
+                                    <input type="text" class="player-input" data-key="playerB1" value="Pemain 1">
+                                    <input type="text" class="player-input" data-key="playerB2" value="Pemain 2">
+                                </div>
+                                <input type="number" class="score-input" data-key="scoreB" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const ADMIN_PIN = "1234";
+        let isAdmin = false;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJoXlc5EP9LmbINBvlJfsVJPDdlEgJY1o",
+            authDomain: "bagan-badminton.firebaseapp.com",
+            databaseURL: "https://bagan-badminton-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "bagan-badminton",
+            storageBucket: "bagan-badminton.firebasestorage.app",
+            messagingSenderId: "776101992812",
+            appId: "1:776101992812:web:554e0e50d1528cc530fb49",
+            measurementId: "G-G0T4KYS4W2"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const matchesRef = db.ref('matches');
+        const activeMatchRef = db.ref('active_match_id');
+
+        const allInputs = document.querySelectorAll('input');
+
+        function setReadOnlyState(isReadOnly) {
+            allInputs.forEach(input => input.readOnly = isReadOnly);
+        }
+        setReadOnlyState(true);
+
+        // Fungsi memperbarui status visual tim yang kalah
+        function updateMatchLossStatus(box) {
+            const scoreInputA = box.querySelector('input[data-key="scoreA"]');
+            const scoreInputB = box.querySelector('input[data-key="scoreB"]');
+            if (!scoreInputA || !scoreInputB) return;
+
+            const scoreA = parseInt(scoreInputA.value) || 0;
+            const scoreB = parseInt(scoreInputB.value) || 0;
+
+            const rows = box.querySelectorAll('.team-row');
+            if (rows.length < 2) return;
+
+            const teamRowA = rows[0];
+            const teamRowB = rows[1];
+
+            if (scoreA > scoreB) {
+                teamRowA.classList.remove('lost');
+                teamRowB.classList.add('lost');
+            } else if (scoreB > scoreA) {
+                teamRowA.classList.add('lost');
+                teamRowB.classList.remove('lost');
+            } else {
+                teamRowA.classList.remove('lost');
+                teamRowB.classList.remove('lost');
+            }
+        }
+
+        document.querySelectorAll('.match-box').forEach(box => {
+            const matchId = box.dataset.matchId;
+            box.querySelectorAll('input[data-key]').forEach(input => {
+                input.addEventListener('input', () => {
+                    if (isAdmin) {
+                        const key = input.dataset.key;
+                        let val = input.value;
+                        if (input.type === 'number') val = parseInt(val) || 0;
+                        matchesRef.child(matchId).child(key).set(val);
+                    }
+                    updateMatchLossStatus(box);
+                });
+            });
+            updateMatchLossStatus(box);
+        });
+
+        matchesRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).forEach(matchId => {
+                    const box = document.querySelector(`.match-box[data-match-id="${matchId}"]`);
+                    if (box) {
+                        const mData = data[matchId];
+                        Object.keys(mData).forEach(key => {
+                            const input = box.querySelector(`input[data-key="${key}"]`);
+                            if (input && input !== document.activeElement) {
+                                input.value = mData[key];
+                            }
+                        });
+                        updateMatchLossStatus(box);
+                    }
+                });
+            }
+        });
+
+        activeMatchRef.on('value', (snapshot) => {
+            const activeId = snapshot.val();
+            document.querySelectorAll('.btn-live-match').forEach(btn => btn.classList.remove('active-live'));
+            if (activeId) {
+                const activeBox = document.querySelector(`.match-box[data-match-id="${activeId}"]`);
+                if (activeBox) {
+                    const btn = activeBox.querySelector('.btn-live-match');
+                    if (btn) btn.classList.add('active-live');
+                }
+            }
+        });
+
+        function goToScoreboard(matchId) {
+            activeMatchRef.set(matchId);
+            window.location.href = `scoreboard.html?match=${matchId}`;
+        }
+
+        function toggleAdminMode() {
+            if (!isAdmin) {
+                const inputPin = prompt("Masukkan PIN Panitia untuk mengedit:");
+                if (inputPin === ADMIN_PIN) {
+                    isAdmin = true;
+                    setReadOnlyState(false);
+                    document.getElementById('btn-admin').innerText = "🔓 Keluar Panitia";
+                    document.getElementById('btn-reset').style.display = "inline-block";
+                    alert("Akses diberikan! Anda sekarang dapat mengedit bagan.");
+                } else if (inputPin !== null) {
+                    alert("PIN Salah! Akses ditolak.");
+                }
+            } else {
+                isAdmin = false;
+                setReadOnlyState(true);
+                document.getElementById('btn-admin').innerText = "🔒 Login Panitia";
+                document.getElementById('btn-reset').style.display = "none";
+                alert("Anda telah keluar dari Mode Panitia.");
+            }
+        }
+
+        function resetData() {
+            if (!isAdmin) return;
+            if (confirm("Apakah Anda yakin ingin mereset seluruh data bagan?")) {
+                matchesRef.remove().then(() => location.reload());
+            }
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+
+        function toggleMenu() {
+            const nav = document.getElementById('mainNav');
+            const btn = document.getElementById('hamburgerBtn');
+            nav.classList.toggle('active-menu');
+            btn.innerText = nav.classList.contains('active-menu') ? '✕' : '☰';
+        }
+    </script>
+</body>
+</html>
